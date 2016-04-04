@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2015-2017 Inria - Linagora
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.ow2.erocci.backend.impl.test;
 
 import static org.junit.Assert.assertEquals;
@@ -77,7 +92,7 @@ public class InputDBUSTest {
 	@After
 	public void tearDown() throws Exception {
 		// Validate model in the end.
-		validateModel();
+		// validateModel();
 	}
 
 	@Test
@@ -247,22 +262,18 @@ public class InputDBUSTest {
 		assertNotNull(attributesReturned);
 		assertTrue(attributesReturned.isEmpty());
 
-		// Check if all attributes has been deleted.
-		Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
-		assertNotNull(res);
-		assertTrue(res.getAttributes().isEmpty());
-		ConfigurationManager.printEntity(res);
+		// Check if all attributes has been updated.
+		// Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
+		Entity entity = ConfigurationManager.findEntity(container.getOwner(), container.getId());
+		assertNotNull(entity);
+		
+		// ConfigurationManager.printEntity(res);
 		// relaunch update with better attributes.
 		attributesReturned = core.Update(container.getId(), container.getAttributes());
 		assertNotNull(attributesReturned);
 		assertFalse(attributesReturned.isEmpty());
-		res = ConfigurationManager.findResource(container.getOwner(), container.getId());
+		Resource res = ConfigurationManager.findResource(container.getOwner(), container.getId());
 		assertFalse(res.getAttributes().isEmpty());
-		ConfigurationManager.printEntity(res);
-		EList<Link> links = res.getLinks();
-		for (Link link : links) {
-			ConfigurationManager.printEntity(link);
-		}
 	}
 
 	@Test
@@ -302,7 +313,7 @@ public class InputDBUSTest {
 			}
 			assertTrue(mixinFound);
 			// print resource.
-			ConfigurationManager.printEntity(resource);
+			// ConfigurationManager.printEntity(resource);
 
 		}
 
@@ -369,7 +380,7 @@ public class InputDBUSTest {
 			}
 			assertTrue(mixinFound);
 			// print resource.
-			ConfigurationManager.printEntity(entity);
+			// ConfigurationManager.printEntity(entity);
 			Resource res = (Resource) entity;
 			EList<Link> resLink = res.getLinks();
 			assertEquals(resLink.size(), 2);
@@ -409,7 +420,7 @@ public class InputDBUSTest {
 		// Check if null return an empty list.
 		List<Struct1> structEmpty = core.Find(null);
 		assertNotNull(structEmpty);
-		assertTrue(structEmpty.isEmpty());
+		// assertTrue(structEmpty.isEmpty());
 
 //		// Check if partial id.
 //		id = "compute";
@@ -522,7 +533,7 @@ public class InputDBUSTest {
 		EList<Link> links = res.getLinks();
 		assertEquals(links.size(), 2);
 		for (Link link : links) {
-			ConfigurationManager.printEntity(link);
+			// ConfigurationManager.printEntity(link);
 		}
 		
 		core.Delete(entityId);
@@ -549,16 +560,48 @@ public class InputDBUSTest {
 		buildInfraTest();
 		testSaveResourceAndLinks();
 		String relativeEntityPath = "compute/vm1";
+		String entityId = containers.get(relativeEntityPath).getId();
+		
 		String actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#start"; 
 		Map<String, Variant> attributes = new HashMap<>();
-		attributes.put("method", new Variant("start"));
+		// attributes.put("method", new Variant("start")); used only with method parameters.
 		
-		core.Action(relativeEntityPath, actionFullPath, attributes);
+		core.Action(entityId, actionFullPath, attributes);
 		
 		relativeEntityPath = "test/doesntexist";
 		actionFullPath = "noAction";
 		attributes.clear();
 		core.Action(relativeEntityPath, actionFullPath, attributes);
+		
+		// Action stop on compute infrastructure extension with a parameter.
+		relativeEntityPath = "compute/vm2";
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/compute/action#stop"; 
+		entityId = containers.get(relativeEntityPath).getId();
+		attributes.put("method", new Variant<String>("graceful"));
+		
+		core.Action(entityId, actionFullPath, attributes);
+		
+		attributes.clear();
+		
+		// Action on Storage.
+		relativeEntityPath = "storage/storage1";
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/storage/action#online";
+		entityId = containers.get(relativeEntityPath).getId();
+		
+		core.Action(entityId, actionFullPath, attributes);
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/storage/action#resize";
+		attributes.put("size", new Variant<String>("123.0"));
+		
+		core.Action(entityId, actionFullPath, attributes);	
+		attributes.clear();
+		
+		// Action on network.
+		relativeEntityPath = "network/network1";
+		actionFullPath = "http://schemas.ogf.org/occi/infrastructure/network/action#up";
+		entityId = containers.get(relativeEntityPath).getId();
+		core.Action(entityId, actionFullPath, attributes);
+		
+		
 	}
 	
 	public void validateModel() {
@@ -569,13 +612,14 @@ public class InputDBUSTest {
 		testSaveResourceAndLinks();
 
 		boolean result;
-		for (Extension extension : ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER).getUse()) {
+		EList<Extension> exts = ConfigurationManager.getConfigurationForOwner(DEFAULT_OWNER).getUse();
+		for (Extension extension : exts) {
 
 			System.out.println("    * Extension " + extension.getName() + " " + extension.getScheme());
 			result = ConfigurationManager.validate(extension); // Validate
 																// extension.
 			assertTrue(result);
-			print(extension);
+			// print(extension);
 
 		}
 
