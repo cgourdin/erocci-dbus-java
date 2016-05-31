@@ -1,6 +1,5 @@
-# Erocci java-dbus integration
-
-[![Build Status](https://travis-ci.org/occiware/erocci-dbus-java.svg?branch=master)](https://travis-ci.org/occiware/erocci-dbus-java)
+# Erocci java-dbus
+This is an old version, please visit this : <a href="https://github.com/occiware/erocci-dbus-java">Official repository</a>
 
 ## Progress dashboard
 [Progress development dashboard](doc/devstatus.md)
